@@ -155,7 +155,7 @@ input[type=range]::-webkit-slider-thumb {
 .phase-cell.active .pp { color:var(--gold-bright); }
 
 /* ─ PC STATUS ─ */
-.pc-status { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.pc-status { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
 .pc-card { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:10px 12px; text-align:center; }
 .pc-card.accent { background:var(--ink); border-color:var(--gold); }
 .pc-card.good { border-color:var(--success); background:var(--success-bg); }
@@ -245,12 +245,6 @@ input[type=range]::-webkit-slider-thumb {
 .crc-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid var(--border-light); font-size:0.72rem; color:var(--text); }
 .crc-row:last-child { border-bottom:none; }
 .crc-pc { font-family:'Cinzel',serif; font-size:0.67rem; font-weight:700; color:var(--gold); }
-
-/* ─ ABILITY BADGES ─ */
-.ability-bar { margin-top:14px; background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:12px 14px; }
-.ability-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
-.ab-badge { font-family:'Cinzel',serif; font-size:0.58rem; font-weight:700; padding:3px 8px; border-radius:2px; background:rgba(139,105,20,0.1); border:1px solid var(--border); color:var(--gold); }
-.ab-badge.future { opacity:0.35; }
 
 /* ─ RESET BTN ─ */
 .reset-btn { font-family:'Cinzel',serif; font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:4px 12px; background:transparent; border:1px solid var(--border); border-radius:2px; color:var(--muted); cursor:pointer; transition:all 0.15s; }
@@ -468,11 +462,6 @@ input[type=range]::-webkit-slider-thumb {
             <div class="sum-val" id="sval-pm">20</div>
           </div>
         </div>
-
-        <div class="ability-bar">
-          <div class="section-title" style="border:none;padding:0;margin-bottom:6px;">Abilità bonus</div>
-          <div class="ability-badges" id="ability-badges"></div>
-        </div>
       </div>
 
     </div><!-- /main-cols -->
@@ -564,7 +553,6 @@ function totalPC(lv) {
   }
   return t;
 }
-function nextAbility(lv) { for (let i=5;i<=50;i+=5) if (i>=lv) return i; return 50; }
 
 // ─ STATE ─
 let lvl = 1;
@@ -624,11 +612,6 @@ function render() {
       <span class="pc-clabel">PC rimanenti</span>
       <div class="pc-cval">${rem}</div>
       <span class="pc-csub">${rem===0?'✦ build completa!':rem<0?'⚠ troppi spesi':'ancora da spendere'}</span>
-    </div>
-    <div class="pc-card">
-      <span class="pc-clabel">Prossima abilità bonus</span>
-      <div class="pc-cval" style="font-size:${nextAbility(lv)===lv?'0.9rem':'1.4rem'};margin-top:4px;">${nextAbility(lv)===lv?'Questo livello!':'Lv. '+nextAbility(lv)}</div>
-      <span class="pc-csub">${nextAbility(lv)-lv===0?'Gratuita':'tra '+(nextAbility(lv)-lv)+' livelli'}</span>
     </div>
   `;
 
@@ -707,13 +690,6 @@ function render() {
     hint.className = 'hint-box neutral';
     hint.textContent = `Hai ${rem} PC ancora da spendere.` + (opts.length ? ` Puoi ancora: ${opts.slice(0,5).join(' · ')}.` : ' Nessun upgrade disponibile con i PC rimasti.');
   }
-
-  // abilities
-  const milestones = [5,10,15,20,25,30,35,40,45,50];
-  document.getElementById('ability-badges').innerHTML = milestones.map(m => {
-    const unlocked = lv >= m;
-    return `<span class="ab-badge${unlocked?'':' future'}">${unlocked?'✦ ':''} Lv.${m}</span>`;
-  }).join('');
 }
 
 // ─ CONTROLS ─
