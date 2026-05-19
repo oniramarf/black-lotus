@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combat Tracker — Maghi</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0e0e0f;
+  --ink: #1c1c1e;
+  --ink2: #2c2c2e;
+  --muted: #6e6e73;
+  --faint: #aeaeb2;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --surface: #18181a;
+  --surface2: #222224;
+  --surface3: #2c2c2e;
+  --pv-high: #30d158;
+  --pv-mid: #ffd60a;
+  --pv-low: #ff453a;
+  --pm-color: #bf5af2;
+  --gold: #c9a84c;
+  --gold2: #f0d080;
+  --active: #0a84ff;
+  --active-bg: rgba(10,132,255,0.12);
+  --ko: rgba(255,69,58,0.10);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--black);
+  color: #e8e8ea;
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(201,168,76,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(10,132,255,0.04) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.app { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* ── HEADER ── */
+.header {
+  border-bottom: 1px solid var(--border2);
+  padding: 28px 0 20px;
+  display: flex; align-items: flex-end; gap: 24px;
+  flex-wrap: wrap;
+}
+.header-left { flex: 1; min-width: 200px; }
+.header-eyebrow {
+  font-family: 'Cinzel', serif;
+  font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 4px;
+}
+.header-title {
+  font-family: 'Cinzel', serif;
+  font-size: 26px; font-weight: 700;
+  color: #f0f0f2; letter-spacing: 0.04em;
+}
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ── ROUND BAR ── */
+.round-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 18px 0 20px;
+  flex-wrap: wrap;
+}
+.round-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.round-num { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold2); min-width: 28px; }
+.turn-info { flex: 1; font-size: 14px; color: var(--faint); font-style: italic; }
+.turn-info strong { color: #e8e8ea; font-style: normal; }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: #c8c8ca; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn:hover { background: var(--surface3); color: #f0f0f2; border-color: rgba(255,255,255,0.22); }
+.btn:active { transform: scale(0.97); }
+.btn-gold { border-color: rgba(201,168,76,0.4); color: var(--gold2); }
+.btn-gold:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.6); }
+.btn-blue { border-color: rgba(10,132,255,0.4); color: #4db3ff; }
+.btn-blue:hover { background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.6); }
+.btn-red { border-color: rgba(255,69,58,0.35); color: #ff6b61; }
+.btn-red:hover { background: rgba(255,69,58,0.1); }
+.btn-sm { font-size: 9px; padding: 5px 10px; border-radius: 5px; }
+.btn-icon { padding: 6px 10px; font-size: 13px; font-family: inherit; }
+
+/* ── PLAYERS GRID ── */
+.players-grid { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── PLAYER CARD ── */
+.player-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative; overflow: hidden;
+}
+.player-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 3px 0 0 3px;
+  background: var(--team-color, transparent);
+}
+.player-card.active-turn {
+  border-color: rgba(10,132,255,0.4);
+  background: linear-gradient(135deg, var(--active-bg) 0%, var(--surface) 60%);
+}
+.player-card.active-turn::after {
+  content: ''; position: absolute; inset: 0; border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(10,132,255,0.25);
+  pointer-events: none;
+}
+.player-card.ko-card {
+  opacity: 0.5;
+  background: var(--ko);
+}
+
+/* ── CARD TOP ── */
+.card-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.init-circle {
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 700;
+  color: var(--faint); background: var(--surface2);
+  cursor: pointer; transition: all 0.15s;
+}
+.init-circle.has-init { color: var(--gold2); border-color: rgba(201,168,76,0.4); }
+.active-turn .init-circle { color: var(--active); border-color: rgba(10,132,255,0.5); background: rgba(10,132,255,0.08); }
+.card-info { flex: 1; min-width: 0; }
+.card-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-name { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600; color: #f0f0f2; }
+.ko-card .card-name { text-decoration: line-through; color: var(--muted); }
+.badge {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px; font-weight: 600;
+}
+.badge-active { background: rgba(10,132,255,0.2); color: #4db3ff; border: 1px solid rgba(10,132,255,0.4); }
+.badge-ko { background: rgba(255,69,58,0.15); color: #ff6b61; border: 1px solid rgba(255,69,58,0.35); }
+.badge-moved { background: rgba(255,214,10,0.12); color: #ffd60a; border: 1px solid rgba(255,214,10,0.3); }
+.card-meta { font-size: 13px; color: var(--muted); margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+.card-meta .elem { color: var(--faint); }
+.card-meta .stats-quick { color: var(--muted); font-size: 12px; }
+.team-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--team-color, var(--muted));
+}
+
+/* ── STAT BARS ── */
+.stats-section { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-bottom: 14px; }
+.stat-block { display: flex; flex-direction: column; gap: 5px; }
+.stat-head { display: flex; justify-content: space-between; align-items: baseline; }
+.stat-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.stat-value { font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700; }
+.stat-max { font-size: 12px; color: var(--muted); font-family: 'Cinzel', serif; }
+.bar-track { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+.pv-fill { background: var(--pv-high); }
+.pm-fill { background: var(--pm-color); }
+
+/* ── CONTROLS ── */
+.controls-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.adj-group { display: flex; flex-direction: column; gap: 4px; }
+.adj-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.adj-inner { display: flex; gap: 5px; align-items: center; }
+.adj-input {
+  width: 52px; font-family: 'Cinzel', serif; font-size: 13px;
+  padding: 5px 8px; text-align: center;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 6px; color: #e8e8ea;
+}
+.adj-input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+
+.sep { width: 1px; background: var(--border); align-self: stretch; margin: 0 4px; }
+
+.init-group { display: flex; flex-direction: column; gap: 4px; }
+.init-inner { display: flex; gap: 5px; align-items: center; }
+.init-input {
+  width: 58px; font-family: 'Cinzel', serif; font-size: 13px;
+  padding: 5px 8px; text-align: center;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 6px; color: #e8e8ea;
+}
+.init-input:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+
+.actions-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+.divider-h { border: none; border-top: 1px solid var(--border); margin: 12px 0 10px; }
+
+/* ── EMPTY ── */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted); font-style: italic; font-size: 17px;
+}
+.empty-state strong { display: block; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600; color: var(--faint); margin-bottom: 8px; font-style: normal; }
+
+/* ── ADD FORM ── */
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px; padding: 20px;
+  margin-bottom: 16px;
+  display: none;
+}
+.add-form.open { display: block; }
+.form-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.form-field { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.form-input, .form-select {
+  font-family: 'Crimson Pro', serif; font-size: 15px;
+  padding: 7px 10px; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 7px;
+  color: #e8e8ea; width: 100%;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+.form-select option { background: #2c2c2e; }
+.form-actions { display: flex; gap: 8px; }
+
+/* ── LOG ── */
+.log-section { margin-top: 24px; }
+.log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.log-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
+.log-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  max-height: 200px; overflow-y: auto;
+}
+.log-entry {
+  padding: 7px 14px; font-size: 13px; color: var(--faint);
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-entry .who { color: #e8e8ea; font-weight: 600; }
+.log-entry .rnd { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 20px;
+  display: none;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px; padding: 28px;
+  max-width: 540px; width: 100%;
+  max-height: 80vh; overflow-y: auto;
+}
+.modal-title { font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.1em; color: var(--gold2); margin-bottom: 16px; }
+.modal-textarea {
+  width: 100%; font-family: 'Courier New', monospace; font-size: 12px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; color: #e8e8ea;
+  padding: 12px; min-height: 180px; resize: vertical;
+}
+.modal-textarea:focus { outline: none; border-color: rgba(201,168,76,0.4); }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.modal-note { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 10px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ── TOOLTIP-LIKE CONFIRM ── */
+.notify {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 18px;
+  font-size: 14px; color: #e8e8ea;
+  z-index: 200; opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.notify.show { opacity: 1; }
+
+@media (max-width: 600px) {
+  .stats-section { grid-template-columns: 1fr; }
+  .controls-row { flex-direction: column; align-items: flex-start; }
+  .header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-eyebrow">Sistema di Combattimento</div>
+      <div class="header-title">Combat Tracker</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-gold" onclick="openAddForm()">+ Personaggio</button>
+      <button class="btn btn-blue" onclick="openImport()">↑ Importa JSON</button>
+      <button class="btn btn-blue" onclick="exportJSON()">↓ Esporta JSON</button>
+      <button class="btn btn-red" onclick="resetCombat()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- ROUND BAR -->
+  <div class="round-bar">
+    <span class="round-label">Round</span>
+    <span class="round-num" id="round-num">1</span>
+    <button class="btn btn-sm" onclick="prevRound()" title="Round precedente">←</button>
+    <button class="btn btn-sm btn-blue" onclick="nextTurn()">Prossimo turno →</button>
+    <span class="turn-info" id="turn-info">Aggiungi personaggi e tira l'iniziativa per iniziare.</span>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="add-form" id="add-form">
+    <div class="form-title">Nuovo Personaggio</div>
+    <div class="form-grid">
+      <div class="form-field" style="grid-column: span 2;">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="f-name" placeholder="es. Lyra Ashveil" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Elemento</label>
+        <select class="form-select" id="f-elem">
+          <option value="Fuoco">🔥 Fuoco</option>
+          <option value="Aria">💨 Aria</option>
+          <option value="Acqua">💧 Acqua</option>
+          <option value="Terra">🪨 Terra</option>
+          <option value="Luce">☀️ Luce</option>
+          <option value="Buio">🌑 Buio</option>
+          <option value="Arcano">🔮 Arcano</option>
+          <option value="Vegetale">🌿 Vegetale</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Squadra</label>
+        <select class="form-select" id="f-team">
+          <option value="A">Squadra A</option>
+          <option value="B">Squadra B</option>
+          <option value="C">Squadra C</option>
+          <option value="D">Squadra D</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">PV massimi</label>
+        <input class="form-input" id="f-pv" type="number" min="1" max="130" value="20" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">PM massimi</label>
+        <input class="form-input" id="f-pm" type="number" min="1" max="68" value="20" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">ATK</label>
+        <input class="form-input" id="f-atk" type="number" min="1" max="18" value="3" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">DEF</label>
+        <input class="form-input" id="f-def" type="number" min="1" max="15" value="2" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">VEL</label>
+        <input class="form-input" id="f-vel" type="number" min="1" max="15" value="3" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gold" onclick="addPlayer()">Aggiungi</button>
+      <button class="btn" onclick="closeAddForm()">Annulla</button>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="players-grid" id="players-grid">
+    <div class="empty-state">
+      <strong>Nessun personaggio</strong>
+      Aggiungi personaggi o importa un file JSON per iniziare il combattimento.
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-section" id="log-section" style="display:none;">
+    <div class="log-header">
+      <span class="log-title">Registro di Combattimento</span>
+      <button class="btn btn-sm btn-red" onclick="clearLog()">Cancella log</button>
+    </div>
+    <div class="log-list" id="log-list"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">Importa Personaggi — JSON</div>
+    <textarea class="modal-textarea" id="import-textarea" placeholder='[
+  {
+    "name": "Lyra",
+    "element": "Fuoco",
+    "team": "A",
+    "pvMax": 45,
+    "pmMax": 36,
+    "atk": 8,
+    "def": 2,
+    "vel": 4
+  }
+]'></textarea>
+    <p class="modal-note">Il JSON deve essere un array di personaggi. PV e PM attuali saranno impostati al massimo. I personaggi esistenti verranno <strong>sostituiti</strong>.</p>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="importJSON()">Importa</button>
+      <button class="btn" onclick="closeImport()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFY -->
+<div class="notify" id="notify"></div>
+
+<script>
+// ── STATE ──
+let players = [];
+let activeIndex = -1;
+let round = 1;
+let logs = [];
+
+const TEAM_COLORS = { A: '#30d158', B: '#ff453a', C: '#0a84ff', D: '#bf5af2' };
+const ELEM_ICONS = {
+  Fuoco:'🔥', Aria:'💨', Acqua:'💧', Terra:'🪨',
+  Luce:'☀️', Buio:'🌑', Arcano:'🔮', Vegetale:'🌿'
+};
+
+// ── NOTIFY ──
+function notify(msg, dur = 2200) {
+  const el = document.getElementById('notify');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ── LOG ──
+function addLog(html) {
+  logs.unshift(html);
+  if (logs.length > 60) logs.pop();
+  renderLog();
+}
+function renderLog() {
+  const section = document.getElementById('log-section');
+  const list = document.getElementById('log-list');
+  if (!logs.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = logs.map(l => `<div class="log-entry">${l}</div>`).join('');
+}
+function clearLog() { logs = []; renderLog(); }
+
+// ── PV COLOR ──
+function pvColor(pct) {
+  if (pct > 50) return '#30d158';
+  if (pct > 25) return '#ffd60a';
+  return '#ff453a';
+}
+
+// ── RENDER ──
+function render() {
+  const grid = document.getElementById('players-grid');
+  const turnInfo = document.getElementById('turn-info');
+
+  if (!players.length) {
+    grid.innerHTML = '<div class="empty-state"><strong>Nessun personaggio</strong>Aggiungi personaggi o importa un file JSON per iniziare il combattimento.</div>';
+    turnInfo.innerHTML = 'Aggiungi personaggi e tira l\'iniziativa per iniziare.';
+    return;
+  }
+
+  const alive = players.filter(p => !p.ko);
+  if (!alive.length) {
+    turnInfo.innerHTML = '<strong style="color:#ff453a;">Tutti i personaggi sono KO!</strong>';
+  } else if (activeIndex >= 0 && players[activeIndex]) {
+    const p = players[activeIndex];
+    turnInfo.innerHTML = `Turno di: <strong>${p.name}</strong> — ${ELEM_ICONS[p.element] || ''} ${p.element} · Sq. ${p.team}`;
+  } else {
+    turnInfo.innerHTML = 'Premi <strong>Prossimo turno</strong> per iniziare.';
+  }
+
+  grid.innerHTML = players.map((p, i) => {
+    const pvPct = Math.round(p.pv / p.pvMax * 100);
+    const pmPct = Math.round(p.pm / p.pmMax * 100);
+    const isActive = i === activeIndex;
+    const tc = TEAM_COLORS[p.team] || '#888';
+    const elem = ELEM_ICONS[p.element] || '';
+
+    return `
+    <div class="player-card ${isActive ? 'active-turn' : ''} ${p.ko ? 'ko-card' : ''}"
+         id="card-${i}" style="--team-color: ${tc};">
+
+      <div class="card-top">
+        <div class="init-circle ${p.initiative !== null ? 'has-init' : ''}"
+             title="Clicca per tirare iniziativa" onclick="rollInit(${i})">
+          ${p.initiative !== null ? p.initiative : '?'}
+        </div>
+        <div class="card-info">
+          <div class="card-name-row">
+            <span class="card-name">${p.name}</span>
+            ${isActive ? '<span class="badge badge-active">Turno</span>' : ''}
+            ${p.ko ? '<span class="badge badge-ko">KO</span>' : ''}
+            ${p.movedOrder ? '<span class="badge badge-moved">Ordine cambiato</span>' : ''}
+          </div>
+          <div class="card-meta">
+            <span class="elem">${elem} ${p.element}</span>
+            <span class="stats-quick">ATK ${p.atk} · DEF ${p.def} · VEL ${p.vel}</span>
+            <span style="color:${tc}; font-size:12px;">■ Sq. ${p.team}</span>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-red" onclick="removePlayer(${i})" title="Rimuovi">✕</button>
+      </div>
+
+      <div class="stats-section">
+        <div class="stat-block">
+          <div class="stat-head">
+            <span class="stat-label">Punti Vita</span>
+            <span class="stat-max">${p.pvMax}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill pv-fill" style="width:${pvPct}%; background:${pvColor(pvPct)};"></div></div>
+          <span class="stat-value" style="color:${pvColor(pvPct)};">${p.pv}</span>
+        </div>
+        <div class="stat-block">
+          <div class="stat-head">
+            <span class="stat-label">Punti Magia</span>
+            <span class="stat-max">${p.pmMax}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill pm-fill" style="width:${pmPct}%;"></div></div>
+          <span class="stat-value" style="color:var(--pm-color);">${p.pm}</span>
+        </div>
+      </div>
+
+      <div class="divider-h"></div>
+
+      <div class="controls-row">
+        <div class="adj-group">
+          <span class="adj-label">Modifica PV</span>
+          <div class="adj-inner">
+            <input class="adj-input" id="pv-adj-${i}" type="number" value="0" min="0" />
+            <button class="btn btn-sm" style="color:var(--pv-high);border-color:rgba(48,209,88,0.3);" onclick="adj(${i},'pv',1)">+ Cura</button>
+            <button class="btn btn-sm btn-red" onclick="adj(${i},'pv',-1)">− Danno</button>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="adj-group">
+          <span class="adj-label">Modifica PM</span>
+          <div class="adj-inner" style="flex-wrap:wrap; gap:4px;">
+            <button class="btn btn-sm" style="color:var(--pm-color);border-color:rgba(191,90,242,0.3);" onclick="adjPM(${i},+6)" title="Meditazione spirituale">+6</button>
+            <span style="width:1px;background:var(--border);align-self:stretch;margin:0 2px;"></span>
+            <button class="btn btn-sm btn-red" onclick="adjPM(${i},-1)" title="Azione secondaria">−1</button>
+            <button class="btn btn-sm btn-red" onclick="adjPM(${i},-2)" title="Incantesimo principale">−2</button>
+            <button class="btn btn-sm btn-red" onclick="adjPM(${i},-6)" title="Elemento alternativo (azione sec.)">−6</button>
+            <button class="btn btn-sm btn-red" onclick="adjPM(${i},-7)" title="Elemento alternativo (incantesimo)">−7</button>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="init-group">
+          <span class="adj-label">Iniziativa (VEL+d20)</span>
+          <div class="init-inner">
+            <input class="init-input" id="init-${i}" type="number"
+                   value="${p.initiative !== null ? p.initiative : ''}"
+                   placeholder="—"
+                   onchange="setInit(${i})" />
+            <button class="btn btn-sm btn-gold" onclick="rollInit(${i})">🎲 Tira</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        ${!p.ko ? `<button class="btn btn-sm btn-blue" onclick="setActive(${i})">▶ Imposta turno</button>` : ''}
+        <button class="btn btn-sm ${p.ko ? '' : 'btn-red'}" onclick="toggleKO(${i})">${p.ko ? '↺ Revoca KO' : '☠ Segna KO'}</button>
+        ${p.movedOrder ? `<button class="btn btn-sm" onclick="clearMoved(${i})">✓ Ordine confermato</button>` : ''}
+        <button class="btn btn-sm" onclick="restoreFull(${i})" title="Riporta PV e PM al massimo">⟳ Ripristina</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADJUST STAT ──
+function adj(i, stat, sign) {
+  const p = players[i];
+  const el = document.getElementById(`${stat}-adj-${i}`);
+  const val = Math.abs(parseInt(el.value) || 0);
+  if (!val) return;
+  const delta = sign * val;
+  if (stat === 'pv') {
+    const prev = p.pv;
+    p.pv = Math.max(0, Math.min(p.pvMax, p.pv + delta));
+    addLog(`<span class="rnd">R${round}</span> · <span class="who">${p.name}</span> PV: ${prev} → <strong>${p.pv}</strong> (${delta > 0 ? '+' : ''}${delta})`);
+    if (p.pv === 0 && !p.ko) {
+      p.ko = true;
+      if (activeIndex === i) activeIndex = -1;
+      addLog(`☠ <span class="who">${p.name}</span> è andato KO!`);
+    }
+    if (p.pv > 0 && p.ko) p.ko = false;
+  } else {
+    const prev = p.pm;
+    p.pm = Math.max(0, Math.min(p.pmMax, p.pm + delta));
+    addLog(`<span class="rnd">R${round}</span> · <span class="who">${p.name}</span> PM: ${prev} → <strong>${p.pm}</strong> (${delta > 0 ? '+' : ''}${delta})`);
+  }
+  el.value = 0;
+  render();
+}
+
+function adjPM(i, delta) {
+  const p = players[i];
+  const prev = p.pm;
+  p.pm = Math.max(0, Math.min(p.pmMax, p.pm + delta));
+  addLog(`<span class="rnd">R${round}</span> · <span class="who">${p.name}</span> PM: ${prev} → <strong>${p.pm}</strong> (${delta > 0 ? '+' : ''}${delta})`);
+  render();
+}
+
+function restoreFull(i) {
+  players[i].pv = players[i].pvMax;
+  players[i].pm = players[i].pmMax;
+  players[i].ko = false;
+  addLog(`⟳ <span class="who">${players[i].name}</span> ripristinato (PV e PM al massimo)`);
+  render();
+}
+
+// ── INITIATIVE ──
+function autoSort() {
+  const activeName = (activeIndex >= 0 && players[activeIndex]) ? players[activeIndex].name : null;
+  players.sort((a, b) => {
+    if (a.ko && !b.ko) return 1;
+    if (!a.ko && b.ko) return -1;
+    const ia = a.initiative ?? -9999, ib = b.initiative ?? -9999;
+    if (ib !== ia) return ib - ia;
+    return b.vel - a.vel;
+  });
+  activeIndex = activeName !== null ? players.findIndex(p => p.name === activeName) : -1;
+}
+
+function setInit(i) {
+  const el = document.getElementById(`init-${i}`);
+  const v = parseInt(el.value);
+  if (!isNaN(v)) {
+    const name = players[i].name;
+    players[i].initiative = v;
+    players[i].movedOrder = false;
+    addLog(`📋 <span class="who">${name}</span>: iniziativa impostata a <strong>${v}</strong>`);
+    autoSort();
+    render();
+  }
+}
+function rollInit(i) {
+  const p = players[i];
+  const d20 = Math.floor(Math.random() * 20) + 1;
+  p.initiative = p.vel + d20;
+  p.movedOrder = false;
+  addLog(`🎲 <span class="who">${p.name}</span>: d20=${d20} + VEL ${p.vel} = <strong>${p.initiative}</strong>`);
+  autoSort();
+  render();
+}
+
+// ── TURN ──
+function setActive(i) {
+  activeIndex = i;
+  addLog(`▶ Turno di <span class="who">${players[i].name}</span> — Round ${round}`);
+  render();
+}
+function nextTurn() {
+  const alive = players.filter(p => !p.ko);
+  if (!alive.length) { notify('Tutti i personaggi sono KO!'); return; }
+  if (activeIndex === -1) {
+    activeIndex = players.findIndex(p => !p.ko);
+  } else {
+    let next = (activeIndex + 1) % players.length;
+    let tries = 0;
+    while (players[next].ko && tries < players.length) { next = (next + 1) % players.length; tries++; }
+    const firstAlive = players.findIndex(p => !p.ko);
+    if (next === firstAlive && next <= activeIndex) {
+      round++;
+      document.getElementById('round-num').textContent = round;
+      addLog(`━━ Fine Round ${round - 1} — inizio Round <strong>${round}</strong> ━━`);
+    }
+    activeIndex = next;
+  }
+  addLog(`▶ Turno di <span class="who">${players[activeIndex].name}</span> (R${round})`);
+  render();
+  // scroll to active card
+  const card = document.getElementById(`card-${activeIndex}`);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function prevRound() {
+  if (round > 1) { round--; document.getElementById('round-num').textContent = round; render(); }
+}
+
+// ── KO / MISC ──
+function toggleKO(i) {
+  players[i].ko = !players[i].ko;
+  if (players[i].ko) {
+    players[i].pv = 0;
+    if (activeIndex === i) activeIndex = -1;
+    addLog(`☠ <span class="who">${players[i].name}</span> segnato KO`);
+  } else {
+    players[i].pv = 1;
+    addLog(`↺ <span class="who">${players[i].name}</span>: KO revocato (PV = 1)`);
+  }
+  render();
+}
+function clearMoved(i) { players[i].movedOrder = false; render(); }
+function removePlayer(i) {
+  const name = players[i].name;
+  players.splice(i, 1);
+  if (activeIndex >= players.length) activeIndex = players.length - 1;
+  if (!players.length) activeIndex = -1;
+  addLog(`✕ <span class="who">${name}</span> rimosso`);
+  render();
+}
+
+
+// ── RESET ──
+function resetCombat() {
+  if (players.length && !confirm('Resettare il combattimento?\nI personaggi verranno mantenuti, ma PV, PM, iniziativa e turni verranno azzerati.')) return;
+  players.forEach(p => { p.pv = p.pvMax; p.pm = p.pmMax; p.initiative = null; p.ko = false; p.movedOrder = false; });
+  round = 1; activeIndex = -1; logs = [];
+  document.getElementById('round-num').textContent = 1;
+  addLog('🔄 Nuovo combattimento — tutti i personaggi ripristinati');
+  render();
+}
+
+// ── ADD FORM ──
+function openAddForm() { document.getElementById('add-form').classList.add('open'); document.getElementById('f-name').focus(); }
+function closeAddForm() { document.getElementById('add-form').classList.remove('open'); }
+function addPlayer() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { notify('⚠ Inserisci un nome'); return; }
+  const pvMax = Math.max(1, parseInt(document.getElementById('f-pv').value) || 20);
+  const pmMax = Math.max(1, parseInt(document.getElementById('f-pm').value) || 20);
+  const atk = Math.max(1, parseInt(document.getElementById('f-atk').value) || 3);
+  const def = Math.max(1, parseInt(document.getElementById('f-def').value) || 2);
+  const vel = Math.max(1, parseInt(document.getElementById('f-vel').value) || 3);
+  const element = document.getElementById('f-elem').value;
+  const team = document.getElementById('f-team').value;
+  players.push({ name, element, team, pvMax, pmMax, pv: pvMax, pm: pmMax, atk, def, vel, initiative: null, ko: false, movedOrder: false });
+  addLog(`➕ <span class="who">${name}</span> aggiunto (${element} · Sq. ${team} · ATK ${atk} · DEF ${def} · VEL ${vel})`);
+  document.getElementById('f-name').value = '';
+  closeAddForm();
+  render();
+  notify(`${name} aggiunto`);
+}
+
+// ── EXPORT ──
+function exportJSON() {
+  const data = players.map(p => ({
+    name: p.name, element: p.element, team: p.team,
+    pvMax: p.pvMax, pv: p.pv,
+    pmMax: p.pmMax, pm: p.pm,
+    atk: p.atk, def: p.def, vel: p.vel,
+    initiative: p.initiative, ko: p.ko
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'personaggi.json';
+  a.click();
+  notify('JSON esportato');
+}
+
+// ── IMPORT ──
+function openImport() { document.getElementById('import-modal').classList.add('open'); }
+function closeImport() { document.getElementById('import-modal').classList.remove('open'); }
+function importJSON() {
+  const raw = document.getElementById('import-textarea').value.trim();
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { notify('⚠ JSON non valido: ' + e.message, 3500); return; }
+  if (!Array.isArray(data)) { notify('⚠ Il JSON deve essere un array'); return; }
+  for (const p of data) {
+    if (!p.name) { notify('⚠ Ogni personaggio deve avere un campo "name"'); return; }
+  }
+  players = data.map(p => {
+    const pvMax = Math.max(1, parseInt(p.pvMax) || 20);
+    const pmMax = Math.max(1, parseInt(p.pmMax) || 20);
+    const pv = p.pv !== undefined ? Math.max(0, Math.min(pvMax, parseInt(p.pv))) : pvMax;
+    const pm = p.pm !== undefined ? Math.max(0, Math.min(pmMax, parseInt(p.pm))) : pmMax;
+    return {
+      name: String(p.name),
+      element: p.element || 'Arcano',
+      team: p.team || 'A',
+      pvMax, pmMax, pv, pm,
+      atk: Math.max(1, parseInt(p.atk) || 3),
+      def: Math.max(1, parseInt(p.def) || 2),
+      vel: Math.max(1, parseInt(p.vel) || 3),
+      initiative: p.initiative !== undefined ? parseInt(p.initiative) || null : null,
+      ko: !!p.ko, movedOrder: false
+    };
+  });
+  round = 1; activeIndex = -1;
+  document.getElementById('round-num').textContent = 1;
+  autoSort();
+  addLog(`📥 Importati ${players.length} personaggi`);
+  closeImport();
+  document.getElementById('import-textarea').value = '';
+  render();
+  notify(`${players.length} personaggi importati`);
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextTurn(); }
+  if (e.key === 'Escape') { closeAddForm(); closeImport(); }
+});
+
+// init
+render();
+</script>
+</body>
+</html>

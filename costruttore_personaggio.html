@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costruttore Personaggio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1208;
+  --parchment: #f5f0e8;
+  --parchment-mid: #ede7d5;
+  --parchment-dark: #e4dcc8;
+  --gold: #8b6914;
+  --gold-light: #c9a84c;
+  --gold-bright: #e8c96a;
+  --border: #b89a5a;
+  --border-light: #d4bc8a;
+  --text: #2c1f0a;
+  --muted: #7a6540;
+  --success: #2d6a4f;
+  --success-bg: rgba(45,106,79,0.08);
+  --danger: #8b2020;
+  --danger-bg: rgba(139,32,32,0.08);
+  --info: #1a4a7a;
+  --info-bg: rgba(26,74,122,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #1e1508;
+  background-image: radial-gradient(ellipse at 30% 10%, #2e1f08 0%, transparent 55%),
+                    radial-gradient(ellipse at 70% 90%, #120e04 0%, transparent 55%);
+  min-height: 100vh;
+  font-family: 'Crimson Pro', Georgia, serif;
+  color: var(--text);
+  padding: 20px 12px 60px;
+}
+.page-title {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold-bright);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+}
+.page-sub {
+  text-align: center;
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.88rem;
+  color: var(--gold-light);
+  font-style: italic;
+  margin-bottom: 20px;
+  opacity: 0.75;
+}
+.sheet {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--parchment);
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.8), inset 0 0 80px rgba(180,150,80,0.06);
+  overflow: hidden;
+}
+.sheet-header {
+  background: var(--ink);
+  padding: 14px 22px;
+  border-bottom: 2px solid var(--gold);
+}
+.sheet-header h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.sheet-header p {
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.8rem;
+  color: var(--gold-light);
+  font-style: italic;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+.sheet-body { padding: 20px 22px; }
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ─ LEVEL BAR ─ */
+.top-bar {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 16px;
+  align-items: start;
+  background: var(--parchment-mid);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.lvl-control { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.lvl-num {
+  font-family: 'Cinzel', serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+.lvl-sub { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
+.lvl-btns { display:flex; gap:4px; margin-top:2px; }
+.lvl-btn {
+  width:30px; height:26px;
+  font-family:'Cinzel',serif; font-size:1rem; font-weight:700;
+  color:var(--gold); background:var(--parchment);
+  border:1px solid var(--border); border-radius:2px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background 0.1s;
+}
+.lvl-btn:hover { background:var(--parchment-dark); }
+.lvl-right { display:flex; flex-direction:column; gap:8px; width:100%; }
+input[type=range] {
+  -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+  background:linear-gradient(to right, var(--gold) 0%, var(--gold) var(--pct,2%), var(--border-light) var(--pct,2%), var(--border-light) 100%);
+  outline:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:var(--gold); border:2px solid var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer;
+}
+.phase-row { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
+.phase-cell { border:1px solid var(--border-light); border-radius:2px; padding:5px 3px; text-align:center; transition:all 0.15s; }
+.phase-cell.done { background:rgba(139,105,20,0.07); border-color:var(--border); }
+.phase-cell.active { background:var(--ink); border-color:var(--gold); }
+.phase-cell .pn { font-family:'Cinzel',serif; font-size:0.57rem; font-weight:700; color:var(--text); }
+.phase-cell.active .pn { color:var(--gold-bright); }
+.phase-cell .pl { font-size:0.6rem; color:var(--muted); display:block; margin-top:1px; }
+.phase-cell.active .pl { color:var(--gold-light); opacity:0.7; }
+.phase-cell .pp { font-family:'Cinzel',serif; font-size:0.7rem; font-weight:700; color:var(--gold); display:block; margin-top:2px; }
+.phase-cell.active .pp { color:var(--gold-bright); }
+
+/* ─ PC STATUS ─ */
+.pc-status { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.pc-card { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:10px 12px; text-align:center; }
+.pc-card.accent { background:var(--ink); border-color:var(--gold); }
+.pc-card.good { border-color:var(--success); background:var(--success-bg); }
+.pc-card.bad { border-color:var(--danger); background:var(--danger-bg); }
+.pc-clabel { font-family:'Cinzel',serif; font-size:0.54rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px; }
+.pc-card.accent .pc-clabel { color:var(--gold-light); opacity:.75; }
+.pc-card.good .pc-clabel { color:var(--success); }
+.pc-card.bad .pc-clabel { color:var(--danger); }
+.pc-cval { font-family:'Cinzel',serif; font-size:1.9rem; font-weight:700; color:var(--ink); line-height:1; }
+.pc-card.accent .pc-cval { color:var(--gold-bright); }
+.pc-card.good .pc-cval { color:var(--success); }
+.pc-card.bad .pc-cval { color:var(--danger); }
+.pc-csub { font-size:0.68rem; color:var(--muted); font-style:italic; display:block; margin-top:2px; }
+.pc-card.accent .pc-csub { color:var(--gold-light); opacity:.6; }
+
+/* ─ LV1 ─ */
+.lv1-section { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:14px 16px; margin-bottom:16px; }
+.lv1-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:8px; }
+.lv1-label { font-family:'Cinzel',serif; font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px; }
+.lv1-controls { display:flex; align-items:center; border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+.warn-badge { font-family:'Cinzel',serif; font-size:0.58rem; font-weight:700; letter-spacing:0.05em; padding:2px 8px; border-radius:2px; }
+.warn-badge.ok { background:var(--success-bg); color:var(--success); border:1px solid var(--success); }
+.warn-badge.bad { background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger); }
+
+/* ─ SPINNERS ─ */
+.sc-btn {
+  width:24px; height:28px; background:var(--parchment-dark); border:none; cursor:pointer;
+  font-family:'Cinzel',serif; font-size:.95rem; font-weight:700; color:var(--gold);
+  transition:background 0.1s; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.sc-btn:hover:not(:disabled) { background:var(--border-light); }
+.sc-btn:disabled { color:var(--border-light); cursor:not-allowed; }
+.sc-val {
+  font-family:'Cinzel',serif; font-size:1rem; font-weight:700; color:var(--ink);
+  background:var(--parchment); border:none;
+  border-left:1px solid var(--border-light); border-right:1px solid var(--border-light);
+  width:36px; height:28px; text-align:center; outline:none;
+  -moz-appearance:textfield;
+}
+.sc-val::-webkit-inner-spin-button,.sc-val::-webkit-outer-spin-button { -webkit-appearance:none; }
+
+/* ─ MAIN COLS ─ */
+.main-cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.stat-block { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:14px 16px; }
+.stat-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border-light); }
+.stat-row:last-child { border-bottom:none; }
+.stat-icon { font-size:1rem; width:22px; text-align:center; flex-shrink:0; }
+.stat-name-wrap { flex:1; min-width:0; }
+.stat-name { font-family:'Cinzel',serif; font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text); }
+.stat-hint { font-family:'Crimson Pro',serif; font-size:0.68rem; color:var(--muted); font-style:italic; display:block; margin-top:1px; }
+.stat-bar { height:4px; background:var(--parchment-dark); border-radius:2px; border:1px solid var(--border-light); overflow:hidden; margin-top:3px; }
+.stat-bar-fill { height:100%; background:var(--gold); border-radius:2px; transition:width 0.2s; }
+.stat-bar-fill.near { background:#c9762a; }
+.stat-bar-fill.maxed { background:var(--success); }
+.stat-controls { display:flex; align-items:center; border:1px solid var(--border); border-radius:2px; overflow:hidden; flex-shrink:0; }
+.stat-cost { font-family:'Cinzel',serif; font-size:0.6rem; font-weight:700; white-space:nowrap; min-width:58px; text-align:right; flex-shrink:0; }
+.stat-cost.cheap { color:var(--success); }
+.stat-cost.mid { color:var(--gold); }
+.stat-cost.exp { color:var(--danger); }
+.stat-cost.maxed { color:var(--border); }
+
+/* ─ SUMMARY ─ */
+.summary-block { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:14px 16px; }
+.sum-stat { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border-light); }
+.sum-stat:last-child { border-bottom:none; }
+.sum-icon { font-size:1.1rem; width:24px; text-align:center; flex-shrink:0; }
+.sum-name { font-family:'Cinzel',serif; font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); flex:1; }
+.sum-bar-wrap { width:70px; }
+.sum-bar { height:6px; background:var(--parchment-dark); border-radius:3px; border:1px solid var(--border-light); overflow:hidden; }
+.sum-bar-fill { height:100%; background:var(--gold); border-radius:3px; transition:width 0.25s; }
+.sum-bar-fill.near { background:#c9762a; }
+.sum-bar-fill.maxed { background:var(--success); }
+.sum-max { font-size:0.6rem; color:var(--border); font-family:'Cinzel',serif; min-width:42px; text-align:right; }
+.sum-val { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:700; color:var(--ink); min-width:40px; text-align:right; }
+
+/* ─ HINT BOX ─ */
+.hint-box { margin-top:12px; padding:10px 12px; border-left:3px solid var(--info); border-radius:0 2px 2px 0; font-size:0.8rem; font-style:italic; line-height:1.5; }
+.hint-box.neutral { background:var(--info-bg); color:var(--info); border-color:var(--info); }
+.hint-box.ok { background:var(--success-bg); color:var(--success); border-color:var(--success); }
+.hint-box.bad { background:var(--danger-bg); color:var(--danger); border-color:var(--danger); }
+
+/* ─ COST REF ─ */
+.cost-ref { margin-top:18px; }
+.cost-ref-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.crc { background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:8px 10px; }
+.crc-title { font-family:'Cinzel',serif; font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:6px; }
+.crc-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid var(--border-light); font-size:0.72rem; color:var(--text); }
+.crc-row:last-child { border-bottom:none; }
+.crc-pc { font-family:'Cinzel',serif; font-size:0.67rem; font-weight:700; color:var(--gold); }
+
+/* ─ ABILITY BADGES ─ */
+.ability-bar { margin-top:14px; background:var(--parchment-mid); border:1px solid var(--border-light); border-radius:3px; padding:12px 14px; }
+.ability-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.ab-badge { font-family:'Cinzel',serif; font-size:0.58rem; font-weight:700; padding:3px 8px; border-radius:2px; background:rgba(139,105,20,0.1); border:1px solid var(--border); color:var(--gold); }
+.ab-badge.future { opacity:0.35; }
+
+/* ─ RESET BTN ─ */
+.reset-btn { font-family:'Cinzel',serif; font-size:0.57rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:4px 12px; background:transparent; border:1px solid var(--border); border-radius:2px; color:var(--muted); cursor:pointer; transition:all 0.15s; }
+.reset-btn:hover { background:var(--parchment-dark); color:var(--text); }
+
+@media(max-width:660px) {
+  .main-cols { grid-template-columns:1fr; }
+  .pc-status { grid-template-columns:1fr 1fr; }
+  .cost-ref-grid { grid-template-columns:1fr 1fr; }
+  .top-bar { grid-template-columns:1fr; }
+  .lv1-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">✦ Costruttore Personaggio ✦</div>
+<div class="page-sub">Imposta il livello, distribuisci i PC e simula la tua build</div>
+
+<div class="sheet">
+  <div class="sheet-header">
+    <h1>Grimorio del Costruttore</h1>
+    <p>Regole di Progressione — Calcolo PC e Build completa</p>
+  </div>
+
+  <div class="sheet-body">
+
+    <!-- LIVELLO -->
+    <div class="section-title">Livello personaggio</div>
+    <div class="top-bar">
+      <div class="lvl-control">
+        <div class="lvl-num" id="lvl-disp">1</div>
+        <div class="lvl-sub">Livello</div>
+        <div class="lvl-btns">
+          <button class="lvl-btn" onclick="changeLvl(-1)">−</button>
+          <button class="lvl-btn" onclick="changeLvl(1)">+</button>
+        </div>
+      </div>
+      <div class="lvl-right">
+        <input type="range" id="lvl" min="1" max="50" value="1" step="1" oninput="setLvl(this.value)">
+        <div class="phase-row" id="phase-bar"></div>
+      </div>
+    </div>
+
+    <!-- PC STATUS -->
+    <div class="pc-status" id="pc-status"></div>
+
+    <!-- LV1 -->
+    <div class="section-title">
+      Statistiche al livello 1
+      <span id="lv1-badge" class="warn-badge ok">Valida · 8/8</span>
+    </div>
+    <div class="lv1-section">
+      <div style="font-size:0.8rem;color:var(--muted);font-style:italic;">8 punti da distribuire tra ATK, DEF e VEL (min 1, max 4 ciascuna). PV e PM partono fissi a 20 per tutti.</div>
+      <div class="lv1-grid">
+        <div>
+          <div class="lv1-label">⚔ ATK base</div>
+          <div class="lv1-controls">
+            <button class="sc-btn" onclick="changeLv1('atk',-1)">−</button>
+            <input class="sc-val" type="number" id="lv1-atk" value="3" min="1" max="4" oninput="syncLv1('atk')">
+            <button class="sc-btn" onclick="changeLv1('atk',1)">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="lv1-label">🛡 DEF base</div>
+          <div class="lv1-controls">
+            <button class="sc-btn" onclick="changeLv1('def',-1)">−</button>
+            <input class="sc-val" type="number" id="lv1-def" value="2" min="1" max="4" oninput="syncLv1('def')">
+            <button class="sc-btn" onclick="changeLv1('def',1)">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="lv1-label">💨 VEL base</div>
+          <div class="lv1-controls">
+            <button class="sc-btn" onclick="changeLv1('vel',-1)">−</button>
+            <input class="sc-val" type="number" id="lv1-vel" value="3" min="1" max="4" oninput="syncLv1('vel')">
+            <button class="sc-btn" onclick="changeLv1('vel',1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPEND + SUMMARY -->
+    <div class="section-title">
+      Distribuzione PC — Lv. <span id="title-lvl">1</span>
+      <button class="reset-btn" onclick="resetSpend()">↺ Azzera spesa</button>
+    </div>
+
+    <div class="main-cols">
+
+      <!-- LEFT: CONTROLS -->
+      <div>
+        <div class="stat-block">
+
+          <!-- ATK -->
+          <div class="stat-row">
+            <span class="stat-icon">⚔</span>
+            <div class="stat-name-wrap">
+              <div class="stat-name">Attacco (ATK)</div>
+              <span class="stat-hint" id="hint-atk">valore base</span>
+              <div class="stat-bar"><div class="stat-bar-fill" id="bar-atk" style="width:0%"></div></div>
+            </div>
+            <div class="stat-controls">
+              <button class="sc-btn" id="btn-atk-m" onclick="changeStat('atk',-1)">−</button>
+              <input class="sc-val" type="number" id="val-atk" value="3" oninput="statInput('atk',this.value)">
+              <button class="sc-btn" id="btn-atk-p" onclick="changeStat('atk',1)">+</button>
+            </div>
+            <div class="stat-cost" id="cost-atk"></div>
+          </div>
+
+          <!-- DEF -->
+          <div class="stat-row">
+            <span class="stat-icon">🛡</span>
+            <div class="stat-name-wrap">
+              <div class="stat-name">Difesa (DEF)</div>
+              <span class="stat-hint" id="hint-def">valore base</span>
+              <div class="stat-bar"><div class="stat-bar-fill" id="bar-def" style="width:0%"></div></div>
+            </div>
+            <div class="stat-controls">
+              <button class="sc-btn" id="btn-def-m" onclick="changeStat('def',-1)">−</button>
+              <input class="sc-val" type="number" id="val-def" value="2" oninput="statInput('def',this.value)">
+              <button class="sc-btn" id="btn-def-p" onclick="changeStat('def',1)">+</button>
+            </div>
+            <div class="stat-cost" id="cost-def"></div>
+          </div>
+
+          <!-- VEL -->
+          <div class="stat-row">
+            <span class="stat-icon">💨</span>
+            <div class="stat-name-wrap">
+              <div class="stat-name">Velocità (VEL)</div>
+              <span class="stat-hint" id="hint-vel">valore base</span>
+              <div class="stat-bar"><div class="stat-bar-fill" id="bar-vel" style="width:0%"></div></div>
+            </div>
+            <div class="stat-controls">
+              <button class="sc-btn" id="btn-vel-m" onclick="changeStat('vel',-1)">−</button>
+              <input class="sc-val" type="number" id="val-vel" value="3" oninput="statInput('vel',this.value)">
+              <button class="sc-btn" id="btn-vel-p" onclick="changeStat('vel',1)">+</button>
+            </div>
+            <div class="stat-cost" id="cost-vel"></div>
+          </div>
+
+          <!-- PV -->
+          <div class="stat-row">
+            <span class="stat-icon">❤</span>
+            <div class="stat-name-wrap">
+              <div class="stat-name">Punti Vita (PV)</div>
+              <span class="stat-hint" id="hint-pv">valore base</span>
+              <div class="stat-bar"><div class="stat-bar-fill" id="bar-pv" style="width:0%"></div></div>
+            </div>
+            <div class="stat-controls">
+              <button class="sc-btn" id="btn-pv-m" onclick="changeStat('pv',-1)">−</button>
+              <input class="sc-val" type="number" id="val-pv" value="20" oninput="statInput('pv',this.value)">
+              <button class="sc-btn" id="btn-pv-p" onclick="changeStat('pv',1)">+</button>
+            </div>
+            <div class="stat-cost" id="cost-pv"></div>
+          </div>
+
+          <!-- PM -->
+          <div class="stat-row">
+            <span class="stat-icon">✦</span>
+            <div class="stat-name-wrap">
+              <div class="stat-name">Punti Magia (PM)</div>
+              <span class="stat-hint" id="hint-pm">valore base</span>
+              <div class="stat-bar"><div class="stat-bar-fill" id="bar-pm" style="width:0%"></div></div>
+            </div>
+            <div class="stat-controls">
+              <button class="sc-btn" id="btn-pm-m" onclick="changeStat('pm',-1)">−</button>
+              <input class="sc-val" type="number" id="val-pm" value="20" oninput="statInput('pm',this.value)">
+              <button class="sc-btn" id="btn-pm-p" onclick="changeStat('pm',1)">+</button>
+            </div>
+            <div class="stat-cost" id="cost-pm"></div>
+          </div>
+
+        </div>
+        <div class="hint-box neutral" id="spend-hint">Usa i controlli per distribuire i PC disponibili.</div>
+      </div>
+
+      <!-- RIGHT: SUMMARY -->
+      <div>
+        <div class="summary-block">
+          <div class="sum-stat">
+            <span class="sum-icon">⚔</span>
+            <span class="sum-name">ATK</span>
+            <div class="sum-bar-wrap"><div class="sum-bar"><div class="sum-bar-fill" id="sbar-atk"></div></div></div>
+            <div class="sum-max">max 18</div>
+            <div class="sum-val" id="sval-atk">3</div>
+          </div>
+          <div class="sum-stat">
+            <span class="sum-icon">🛡</span>
+            <span class="sum-name">DEF</span>
+            <div class="sum-bar-wrap"><div class="sum-bar"><div class="sum-bar-fill" id="sbar-def"></div></div></div>
+            <div class="sum-max">max 15</div>
+            <div class="sum-val" id="sval-def">2</div>
+          </div>
+          <div class="sum-stat">
+            <span class="sum-icon">💨</span>
+            <span class="sum-name">VEL</span>
+            <div class="sum-bar-wrap"><div class="sum-bar"><div class="sum-bar-fill" id="sbar-vel"></div></div></div>
+            <div class="sum-max">max 15</div>
+            <div class="sum-val" id="sval-vel">3</div>
+          </div>
+          <div class="sum-stat">
+            <span class="sum-icon">❤</span>
+            <span class="sum-name">PV</span>
+            <div class="sum-bar-wrap"><div class="sum-bar"><div class="sum-bar-fill" id="sbar-pv"></div></div></div>
+            <div class="sum-max">max 130</div>
+            <div class="sum-val" id="sval-pv">20</div>
+          </div>
+          <div class="sum-stat">
+            <span class="sum-icon">✦</span>
+            <span class="sum-name">PM</span>
+            <div class="sum-bar-wrap"><div class="sum-bar"><div class="sum-bar-fill" id="sbar-pm"></div></div></div>
+            <div class="sum-max">max 68</div>
+            <div class="sum-val" id="sval-pm">20</div>
+          </div>
+        </div>
+
+        <div class="ability-bar">
+          <div class="section-title" style="border:none;padding:0;margin-bottom:6px;">Abilità bonus</div>
+          <div class="ability-badges" id="ability-badges"></div>
+        </div>
+      </div>
+
+    </div><!-- /main-cols -->
+
+    <!-- COST REF -->
+    <div class="cost-ref">
+      <div class="section-title">Tabella costi di riferimento</div>
+      <div class="cost-ref-grid">
+        <div class="crc">
+          <div class="crc-title">⚔ ATK (max 18)</div>
+          <div class="crc-row"><span>1 – 8</span><span class="crc-pc">3 PC → +1</span></div>
+          <div class="crc-row"><span>9 – 14</span><span class="crc-pc">4 PC → +1</span></div>
+          <div class="crc-row"><span>15 – 18</span><span class="crc-pc">5 PC → +1</span></div>
+        </div>
+        <div class="crc">
+          <div class="crc-title">🛡 DEF (max 15)</div>
+          <div class="crc-row"><span>1 – 7</span><span class="crc-pc">3 PC → +1</span></div>
+          <div class="crc-row"><span>8 – 12</span><span class="crc-pc">4 PC → +1</span></div>
+          <div class="crc-row"><span>13 – 15</span><span class="crc-pc">5 PC → +1</span></div>
+        </div>
+        <div class="crc">
+          <div class="crc-title">💨 VEL (max 15)</div>
+          <div class="crc-row"><span>1 – 7</span><span class="crc-pc">2 PC → +1</span></div>
+          <div class="crc-row"><span>8 – 12</span><span class="crc-pc">3 PC → +1</span></div>
+          <div class="crc-row"><span>13 – 15</span><span class="crc-pc">4 PC → +1</span></div>
+        </div>
+        <div class="crc">
+          <div class="crc-title">❤ PV (max 130)</div>
+          <div class="crc-row"><span>20 – 45</span><span class="crc-pc">1 PC → +5</span></div>
+          <div class="crc-row"><span>46 – 90</span><span class="crc-pc">2 PC → +5</span></div>
+          <div class="crc-row"><span>91 – 130</span><span class="crc-pc">3 PC → +5</span></div>
+        </div>
+        <div class="crc">
+          <div class="crc-title">✦ PM (max 68)</div>
+          <div class="crc-row"><span>20 – 36</span><span class="crc-pc">1 PC → +4</span></div>
+          <div class="crc-row"><span>37 – 52</span><span class="crc-pc">2 PC → +4</span></div>
+          <div class="crc-row"><span>53 – 68</span><span class="crc-pc">3 PC → +4</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PHASES = [
+  {name:"Apprendista",min:1,max:10,pc:3},
+  {name:"Adepto",min:11,max:20,pc:4},
+  {name:"Esperto",min:21,max:30,pc:4},
+  {name:"Maestro",min:31,max:40,pc:5},
+  {name:"Leggenda",min:41,max:50,pc:5},
+];
+
+// Soglie di costo: {sotto questa soglia (esclusa), costo per salire di 1 step}
+const TIERS = {
+  atk:[{cap:8,pc:3},{cap:14,pc:4},{cap:18,pc:5}],
+  def:[{cap:7,pc:3},{cap:12,pc:4},{cap:15,pc:5}],
+  vel:[{cap:7,pc:2},{cap:12,pc:3},{cap:15,pc:4}],
+  pv: [{cap:45,pc:1},{cap:90,pc:2},{cap:130,pc:3}],
+  pm: [{cap:36,pc:1},{cap:52,pc:2},{cap:68,pc:3}],
+};
+const MAX = {atk:18,def:15,vel:15,pv:130,pm:68};
+const MIN_ABS = {atk:1,def:1,vel:1,pv:20,pm:20};
+const STEP = {atk:1,def:1,vel:1,pv:5,pm:4};
+
+// Costo del prossimo step a partire da val
+function nextCost(stat, val) {
+  for (const t of TIERS[stat]) if (val < t.cap) return t.pc;
+  return null;
+}
+
+// Costo totale per passare da a a b (b > a)
+function costRange(stat, a, b) {
+  let cost = 0, v = a, s = STEP[stat];
+  while (v < b) {
+    const c = nextCost(stat, v);
+    if (c === null) break;
+    cost += c; v += s;
+  }
+  return cost;
+}
+
+function getPhase(lv) { return PHASES.find(p => lv >= p.min && lv <= p.max); }
+function totalPC(lv) {
+  let t = 0;
+  for (const p of PHASES) {
+    if (lv < p.min) break;
+    t += (Math.min(lv,p.max) - p.min + 1) * p.pc;
+  }
+  return t;
+}
+function nextAbility(lv) { for (let i=5;i<=50;i+=5) if (i>=lv) return i; return 50; }
+
+// ─ STATE ─
+let lvl = 1;
+let lv1 = {atk:3,def:2,vel:3};
+// current stat values (include lv1 base, incremented by PC spend)
+let stats = {atk:3,def:2,vel:3,pv:20,pm:20};
+
+function baseOf(s) { return {atk:lv1.atk,def:lv1.def,vel:lv1.vel,pv:20,pm:20}[s]; }
+
+function spentPC() {
+  let t = 0;
+  for (const s of ['atk','def','vel','pv','pm']) t += costRange(s, baseOf(s), stats[s]);
+  return t;
+}
+function availPC() { return totalPC(lvl); }
+function remPC()   { return availPC() - spentPC(); }
+
+// ─ RENDER ─
+function render() {
+  const lv = lvl;
+  const phase = getPhase(lv);
+  const avail = availPC();
+  const spent = spentPC();
+  const rem = remPC();
+
+  // level display
+  document.getElementById('lvl-disp').textContent = lv;
+  document.getElementById('title-lvl').textContent = lv;
+  const sl = document.getElementById('lvl');
+  sl.value = lv;
+  sl.style.setProperty('--pct', ((lv-1)/49*100).toFixed(1)+'%');
+
+  // phase bar
+  document.getElementById('phase-bar').innerHTML = PHASES.map(p => {
+    const act = p.name === phase.name, done = p.max < lv;
+    return `<div class="phase-cell${act?' active':done?' done':''}">
+      <div class="pn">${p.name}</div>
+      <span class="pl">Lv.${p.min}–${p.max}</span>
+      <span class="pp">${p.pc}PC/Lv</span>
+    </div>`;
+  }).join('');
+
+  // PC cards
+  const overSpent = rem < 0;
+  document.getElementById('pc-status').innerHTML = `
+    <div class="pc-card accent">
+      <span class="pc-clabel">PC disponibili · Lv.1–${lv}</span>
+      <div class="pc-cval">${avail}</div>
+      <span class="pc-csub">${phase.pc} PC/livello ora</span>
+    </div>
+    <div class="pc-card${overSpent?' bad':''}">
+      <span class="pc-clabel">PC spesi</span>
+      <div class="pc-cval">${spent}</div>
+      <span class="pc-csub">in potenziamenti</span>
+    </div>
+    <div class="pc-card${rem===0?' good':rem<0?' bad':''}">
+      <span class="pc-clabel">PC rimanenti</span>
+      <div class="pc-cval">${rem}</div>
+      <span class="pc-csub">${rem===0?'✦ build completa!':rem<0?'⚠ troppi spesi':'ancora da spendere'}</span>
+    </div>
+    <div class="pc-card">
+      <span class="pc-clabel">Prossima abilità bonus</span>
+      <div class="pc-cval" style="font-size:${nextAbility(lv)===lv?'0.9rem':'1.4rem'};margin-top:4px;">${nextAbility(lv)===lv?'Questo livello!':'Lv. '+nextAbility(lv)}</div>
+      <span class="pc-csub">${nextAbility(lv)-lv===0?'Gratuita':'tra '+(nextAbility(lv)-lv)+' livelli'}</span>
+    </div>
+  `;
+
+  // lv1 badge
+  const b1 = lv1.atk+lv1.def+lv1.vel;
+  const v1 = b1===8 && lv1.atk>=1&&lv1.atk<=4 && lv1.def>=1&&lv1.def<=4 && lv1.vel>=1&&lv1.vel<=4;
+  const badge = document.getElementById('lv1-badge');
+  badge.textContent = v1 ? `Valida · ${b1}/8` : `Non valida · ${b1}/8`;
+  badge.className = 'warn-badge ' + (v1?'ok':'bad');
+
+  // stat rows
+  const STATS = ['atk','def','vel','pv','pm'];
+  const ranges = {atk:17,def:14,vel:14,pv:110,pm:48}; // max-min
+
+  for (const s of STATS) {
+    const v = stats[s];
+    const base = baseOf(s);
+    const mx = MAX[s];
+    const invested = costRange(s, base, v);
+    const nc = nextCost(s, v);
+
+    // bar
+    const pct = Math.round((v - MIN_ABS[s]) / (mx - MIN_ABS[s]) * 100);
+    for (const pfx of ['bar-','sbar-']) {
+      const el = document.getElementById(pfx+s);
+      if (!el) continue;
+      el.style.width = pct + '%';
+      el.className = (pfx==='bar-'?'stat-bar-fill ':'sum-bar-fill ') + (pct>=95?'maxed':pct>=65?'near':'');
+    }
+
+    // hint
+    const hEl = document.getElementById('hint-'+s);
+    if (hEl) hEl.textContent = invested > 0 ? `${invested} PC investiti · da ${base} a ${v}` : 'valore base (nessun PC speso)';
+
+    // next cost tag
+    const cEl = document.getElementById('cost-'+s);
+    if (cEl) {
+      if (nc === null) { cEl.textContent = 'Massimo'; cEl.className = 'stat-cost maxed'; }
+      else {
+        const step = STEP[s];
+        const cls = nc<=1?'cheap':nc<=3?'mid':'exp';
+        cEl.textContent = `+${step} costa ${nc} PC`;
+        cEl.className = 'stat-cost ' + cls;
+      }
+    }
+
+    // value inputs
+    const vEl = document.getElementById('val-'+s);
+    if (vEl) vEl.value = v;
+
+    // buttons
+    const bm = document.getElementById('btn-'+s+'-m');
+    const bp = document.getElementById('btn-'+s+'-p');
+    if (bm) bm.disabled = (v <= base);
+    if (bp) bp.disabled = (v >= mx) || (nc === null) || (rem <= 0 && nc > 0);
+
+    // summary values
+    const svEl = document.getElementById('sval-'+s);
+    if (svEl) svEl.textContent = v;
+  }
+
+  // spend hint
+  const hint = document.getElementById('spend-hint');
+  if (rem < 0) {
+    hint.className = 'hint-box bad';
+    hint.textContent = `Hai speso ${Math.abs(rem)} PC in più rispetto a quelli disponibili al livello ${lv}. Riduci qualche statistica (usa il bottone −) oppure sali di livello.`;
+  } else if (rem === 0) {
+    hint.className = 'hint-box ok';
+    hint.textContent = `Build completa! Tutti i ${avail} PC sono stati assegnati. Le statistiche sono valide per il livello ${lv}.`;
+  } else {
+    const opts = [];
+    for (const s of STATS) {
+      const c = nextCost(s, stats[s]);
+      if (c !== null && c <= rem) opts.push(`+${STEP[s]} ${s.toUpperCase()} (${c} PC)`);
+    }
+    hint.className = 'hint-box neutral';
+    hint.textContent = `Hai ${rem} PC ancora da spendere.` + (opts.length ? ` Puoi ancora: ${opts.slice(0,5).join(' · ')}.` : ' Nessun upgrade disponibile con i PC rimasti.');
+  }
+
+  // abilities
+  const milestones = [5,10,15,20,25,30,35,40,45,50];
+  document.getElementById('ability-badges').innerHTML = milestones.map(m => {
+    const unlocked = lv >= m;
+    return `<span class="ab-badge${unlocked?'':' future'}">${unlocked?'✦ ':''} Lv.${m}</span>`;
+  }).join('');
+}
+
+// ─ CONTROLS ─
+function setLvl(v) { lvl = parseInt(v); render(); }
+function changeLvl(d) { lvl = Math.max(1, Math.min(50, lvl+d)); render(); }
+
+function changeStat(s, d) {
+  const step = STEP[s];
+  const base = baseOf(s);
+  const nv = stats[s] + d*step;
+  if (d > 0) {
+    const c = nextCost(s, stats[s]);
+    if (c === null || nv > MAX[s] || remPC() < c) return;
+  } else {
+    if (nv < base) return;
+  }
+  stats[s] = nv;
+  render();
+}
+
+function statInput(s, raw) {
+  const step = STEP[s];
+  const base = baseOf(s);
+  let v = parseInt(raw);
+  if (isNaN(v)) return;
+  if (step > 1) v = Math.round(v/step)*step;
+  v = Math.max(base, Math.min(MAX[s], v));
+  // check if this would cost too many PC
+  const wouldCost = costRange(s, base, v);
+  const otherSpent = spentPC() - costRange(s, base, stats[s]);
+  if (wouldCost + otherSpent > availPC()) {
+    // find max affordable
+    let vv = base;
+    while (vv + step <= MAX[s] && costRange(s, base, vv+step) + otherSpent <= availPC()) vv += step;
+    v = vv;
+  }
+  stats[s] = v;
+  render();
+}
+
+function changeLv1(s, d) {
+  const cur = parseInt(document.getElementById('lv1-'+s).value)||1;
+  const nv = cur+d;
+  if (nv<1||nv>4) return;
+  document.getElementById('lv1-'+s).value = nv;
+  lv1[s] = nv;
+  stats[s] = Math.max(stats[s], nv);
+  render();
+}
+
+function syncLv1(s) {
+  lv1[s] = parseInt(document.getElementById('lv1-'+s).value)||1;
+  stats[s] = Math.max(stats[s], lv1[s]);
+  render();
+}
+
+function resetSpend() {
+  stats = {atk:lv1.atk, def:lv1.def, vel:lv1.vel, pv:20, pm:20};
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
